@@ -148,9 +148,12 @@
                     {{ isLessonDone(lesson.id) ? '✅' : '📖' }}
                   </span>
                   <div class="lesson-text-wrap">
-                    <span class="lesson-mini-title">
-                      {{ mod.order }}.{{ lesson.order }} {{ lesson.title }}
-                    </span>
+                    <a
+  class="lesson-mini-title"
+  [routerLink]="['/modules', mod.id, 'lessons', lesson.id]"
+>
+  {{ mod.order }}.{{ lesson.order }} {{ lesson.title }}
+</a>
                     <div class="lesson-sub-meta">
                       <span>⏱️ {{ lesson.durationMinutes }} წთ</span>
                       @if (getQuizScore(lesson.quiz.id); as score) {

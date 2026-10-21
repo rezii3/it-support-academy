@@ -1,0 +1,52 @@
+@if (module(); as mod) {
+  <div class="page">
+    <a routerLink="/dashboard" class="back-link">← მთავარ დაფაზე (Dashboard)</a>
+
+    <header class="module-head">
+      <div class="module-icon">{{ mod.icon }}</div>
+      <div>
+        <span class="module-order">მოდული {{ mod.order }} · ⏱️ {{ mod.estimatedHours }} სთ</span>
+        <h1>{{ mod.title }}</h1>
+        <p class="subtitle">{{ mod.subtitle }}</p>
+      </div>
+    </header>
+
+    <p class="description">{{ mod.description }}</p>
+
+    <app-progress-bar
+      [value]="moduleProgress()"
+      [label]="'მოდულის პროგრესი: ' + progress.getModuleCompletedLessonsCount(mod.id) + ' / ' + mod.lessons.length"
+      size="md"
+    />
+
+    <h2>გაკვეთილები (Lessons)</h2>
+
+    <div class="lesson-list">
+      @for (lesson of mod.lessons; track lesson.id) {
+        <a
+          class="lesson-row"
+          [class.done]="progress.isLessonCompleted(lesson.id)"
+          [routerLink]="['/modules', mod.id, 'lessons', lesson.id]"
+        >
+          <span class="lesson-status">{{ progress.isLessonCompleted(lesson.id) ? '✅' : '📖' }}</span>
+          <span class="lesson-info">
+            <span class="lesson-title">{{ mod.order }}.{{ lesson.order }} {{ lesson.title }}</span>
+            <span class="lesson-summary">{{ lesson.summary }}</span>
+            <span class="lesson-meta">
+              ⏱️ {{ lesson.durationMinutes }} წთ
+              @if (!hasContent(lesson.sections.length)) {
+                <span class="soon">· შინაარსი მალე დაემატება</span>
+              }
+            </span>
+          </span>
+          <span class="lesson-open">გახსნა →</span>
+        </a>
+      }
+    </div>
+  </div>
+} @else {
+  <div class="page">
+    <p>მოდული ვერ მოიძებნა.</p>
+    <a routerLink="/dashboard" class="back-link">← მთავარ დაფაზე</a>
+  </div>
+}

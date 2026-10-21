@@ -1,0 +1,167 @@
+@if (lesson(); as lesson) {
+  <article class="page">
+    <a [routerLink]="['/modules', lesson.moduleId]" class="back-link">
+      ← {{ module()?.title }}
+    </a>
+
+    <header class="lesson-head">
+      <span class="lesson-meta">გაკვეთილი {{ lesson.order }} · ⏱️ {{ lesson.durationMinutes }} წთ</span>
+      <h1>{{ lesson.title }}</h1>
+      <p class="summary">{{ lesson.summary }}</p>
+    </header>
+
+    @if (lesson.objectives.length > 0) {
+      <section class="box objectives">
+        <h2>რას ისწავლით (Objectives)</h2>
+        <ul>
+          @for (goal of lesson.objectives; track goal) {
+            <li>{{ goal }}</li>
+          }
+        </ul>
+      </section>
+    }
+
+    @if (lesson.sections.length === 0) {
+      <section class="box empty">
+        <h2>შინაარსი ჯერ არ დამატებულა</h2>
+        <p>ამ გაკვეთილის ტექსტი მალე დაემატება. ამასობაში შეგიძლიათ გადახვიდეთ შემდეგ გაკვეთილზე.</p>
+      </section>
+    }
+
+    @for (section of lesson.sections; track section.heading) {
+      <section class="section">
+        <h2>{{ section.heading }}</h2>
+        <p class="body">{{ section.content }}</p>
+
+        @if (section.codeOrCommand) {
+          <pre class="code"><code>{{ section.codeOrCommand }}</code></pre>
+        }
+
+        @if (section.warning) {
+          <div class="callout warning"><strong>გაფრთხილება:</strong> {{ section.warning }}</div>
+        }
+
+        @if (section.proTip) {
+          <div class="callout tip">
+            <strong>რჩევა / რესურსი:</strong> {{ section.proTip }}
+            @if (youtubeSearchUrl(section.proTip); as url) {
+              <a class="yt-link" [href]="url" target="_blank" rel="noopener">▶ ვიდეოების ძებნა YouTube-ზე</a>
+            }
+          </div>
+        }
+      </section>
+    }
+
+    @if (lesson.keyTerms.length > 0) {
+      <section class="section">
+        <h2>საკვანძო ტერმინები (Key Terms)</h2>
+        <dl class="terms">
+          @for (term of lesson.keyTerms; track term.termEn) {
+            <div class="term">
+              <dt>{{ term.termKa }} <span class="en">({{ term.termEn }})</span></dt>
+              <dd>{{ term.definitionKa }}</dd>
+            </div>
+          }
+        </dl>
+      </section>
+    }
+
+    @if (lesson.practicalScenario; as scenario) {
+      <section class="box lab">
+        <h2>{{ scenario.title }}</h2>
+        <p class="body">{{ scenario.ticketDescription }}</p>
+
+        <button type="button" class="btn ghost" (click)="showSolution.set(!showSolution())">
+          {{ showSolution() ? 'ამოხსნის დამალვა' : 'ამოხსნის ჩვენება' }}
+        </button>
+
+        @if (showSolution()) {
+          <ol class="steps">
+            @for (step of scenario.solutionSteps; track step) {
+              <li>{{ step }}</li>
+            }
+          </ol>
+        }
+      </section>
+    }
+
+    <section class="section quiz">
+      <h2>{{ lesson.quiz.title }}</h2>
+
+      @if (lesson.quiz.questions.length === 0) {
+        <p class="muted">ამ გაკვეთილის ტესტი ჯერ არ დამატებულა.</p>
+      } @else {
+        <p class="muted">
+          ჩასაბარებლად საჭიროა {{ lesson.quiz.passingScorePercent }}%.
+          @if (progress.getQuizResult(lesson.quiz.id); as best) {
+            წინა შედეგი: {{ best.scorePercent }}%
+          }
+        </p>
+
+        @for (q of lesson.quiz.questions; track q.id; let i = $index) {
+          <div class="question">
+            <p class="q-text">{{ i + 1 }}. {{ q.questionText }}</p>
+            <div class="options">
+              @for (opt of q.options; track opt.id) {
+                <button
+                  type="button"
+                  [class]="optionClass(q.id, opt.id, q.correctOptionId)"
+                  [disabled]="submitted()"
+                  (click)="selectAnswer(q.id, opt.id)"
+                >
+                  {{ opt.text }}
+                </button>
+              }
+            </div>
+            @if (submitted()) {
+              <p class="explanation">{{ q.explanation }}</p>
+            }
+          </div>
+        }
+
+        @if (!submitted()) {
+          <button
+            type="button"
+            class="btn primary"
+            [disabled]="answeredCount() < lesson.quiz.questions.length"
+            (click)="submitQuiz()"
+          >
+            პასუხების გაგზავნა ({{ answeredCount() }} / {{ lesson.quiz.questions.length }})
+          </button>
+        } @else {
+          <div class="result" [class.pass]="passed()" [class.fail]="!passed()">
+            <strong>
+              {{ correctCount() }} / {{ lesson.quiz.questions.length }} სწორი ({{ scorePercent() }}%)
+            </strong>
+            <span>
+              {{ passed() ? 'ტესტი ჩაბარებულია, გაკვეთილი დასრულდა.' : 'ჩასაბარებლად საჭიროა ' + lesson.quiz.passingScorePercent + '%. სცადეთ თავიდან.' }}
+            </span>
+            <button type="button" class="btn ghost" (click)="retryQuiz()">თავიდან ცდა</button>
+          </div>
+        }
+      }
+    </section>
+
+    <footer class="lesson-footer">
+      @if (!progress.isLessonCompleted(lesson.id)) {
+        <button type="button" class="btn primary" (click)="completeLesson()">✓ გაკვეთილის დასრულება</button>
+      } @else {
+        <span class="done-badge">✅ გაკვეთილი დასრულებულია</span>
+      }
+
+      <div class="nav-buttons">
+        @if (neighbours().prev; as prev) {
+          <a class="btn ghost" [routerLink]="['/modules', prev.module.id, 'lessons', prev.lesson.id]">← წინა</a>
+        }
+        @if (neighbours().next; as next) {
+          <a class="btn ghost" [routerLink]="['/modules', next.module.id, 'lessons', next.lesson.id]">შემდეგი →</a>
+        }
+      </div>
+    </footer>
+  </article>
+} @else {
+  <div class="page">
+    <p>გაკვეთილი ვერ მოიძებნა.</p>
+    <a routerLink="/dashboard" class="back-link">← მთავარ დაფაზე</a>
+  </div>
+}
