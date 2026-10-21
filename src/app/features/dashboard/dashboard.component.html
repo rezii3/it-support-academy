@@ -1,0 +1,196 @@
+<div class="dashboard-container">
+  <!-- Hero / Overview Banner -->
+  <section class="hero-card">
+    <div class="hero-content">
+      <span class="hero-badge">🚀 კარიერული გზა (Career Path): Junior IT Support Specialist</span>
+      <h1>მოგესალმებით IT Support-ის აკადემიაში!</h1>
+      <p class="hero-description">
+        ნაბიჯ-ნაბიჯ შეისწავლეთ კომპიუტერული აპარატურა (Hardware), ოპერაციული სისტემები (OS),
+        ქსელები (Networking) და ტექნიკური მხარდაჭერის (Help Desk / Troubleshooting) სტანდარტები.
+        თქვენი პროგრესი ავტომატურად ინახება ბრაუზერში (localStorage).
+      </p>
+
+      <div class="hero-actions">
+        @if (nextRecommendedLesson(); as nextItem) {
+          <div class="next-step-box">
+            <span class="next-label">შემდეგი რეკომენდებული გაკვეთილი (Next Lesson):</span>
+            <strong class="next-title">
+              {{ nextItem.module.icon }} {{ nextItem.lesson.title }}
+            </strong>
+          </div>
+        } @else {
+          <div class="next-step-box completed-all">
+            <span>🎉 გილოცავთ! თქვენ დაასრულეთ ყველა სასწავლო მოდული!</span>
+          </div>
+        }
+
+        <div class="demo-controls">
+  <button type="button" class="btn btn-danger-outline" (click)="onResetProgress()">
+    🔄 პროგრესის განულება (Reset Progress)
+  </button>
+
+  <button type="button" class="btn btn-danger-outline" (click)="onExportProgress()">
+    💾 შენახვა ფაილად (Export)
+  </button>
+
+  <label class="btn btn-danger-outline" style="cursor: pointer">
+    📂 აღდგენა (Import)
+    <input type="file" accept=".json" (change)="onImportProgress($event)" hidden />
+  </label>
+</div>
+      </div>
+    </div>
+
+    <div class="hero-progress-panel">
+      <div class="circular-readout">
+        <span class="big-percent">{{ totalProgress }}%</span>
+        <span class="percent-caption">საერთო პროგრესი (Total Progress)</span>
+      </div>
+
+      <app-progress-bar
+        [value]="totalProgress"
+        [showPercentage]="false"
+        size="lg"
+      />
+
+      <div class="rank-info">
+        <span class="rank-label">მიმდინარე სტატუსი (Current Rank):</span>
+        <span class="rank-value">{{ progressService.currentRankTitle() }}</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- KPI Statistics Grid -->
+  <section class="stats-grid">
+    <div class="stat-card">
+      <div class="stat-icon-box blue">📚</div>
+      <div class="stat-details">
+        <span class="stat-number">
+          {{ progressService.completedLessonsCount() }} / {{ curriculumService.totalLessonsCount() }}
+        </span>
+        <span class="stat-title">გავლილი გაკვეთილი (Completed Lessons)</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-box green">📦</div>
+      <div class="stat-details">
+        <span class="stat-number">
+          {{ progressService.completedModulesCount() }} / {{ curriculumService.totalModulesCount() }}
+        </span>
+        <span class="stat-title">დასრულებული მოდული (Completed Modules)</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-box purple">✅</div>
+      <div class="stat-details">
+        <span class="stat-number">{{ progressService.passedQuizzesCount() }}</span>
+        <span class="stat-title">ჩაბარებული ტესტი (Passed Quizzes)</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon-box gold">⚡</div>
+      <div class="stat-details">
+        <span class="stat-number">{{ progressService.totalXp() }} XP</span>
+        <span class="stat-title">დაგროვილი ქულა (Total XP)</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Modules Curriculum Section -->
+  <section class="modules-section">
+    <div class="section-header">
+      <h2>სასწავლო მოდულები (Learning Modules)</h2>
+      <span class="section-subtitle">
+        ჯამური დრო (Total Estimated Time): ~{{ curriculumService.totalEstimatedHours() }} საათი
+      </span>
+    </div>
+
+    <div class="modules-grid">
+      @for (mod of modules(); track mod.id) {
+        <article class="module-card" [class.module-completed]="getModuleProgress(mod.id) === 100">
+          <div class="module-card-header">
+            <div class="module-icon">{{ mod.icon }}</div>
+            <div class="module-meta">
+              <span class="module-order">მოდული {{ mod.order }} (Module {{ mod.order }})</span>
+              <span class="module-hours">⏱️ {{ mod.estimatedHours }} სთ</span>
+            </div>
+          </div>
+
+          <h3 class="module-title">{{ mod.title }}</h3>
+          <p class="module-subtitle">{{ mod.subtitle }}</p>
+          <p class="module-description">{{ mod.description }}</p>
+
+          <div class="module-progress-block">
+            <app-progress-bar
+              [value]="getModuleProgress(mod.id)"
+              [label]="
+                'მოდულის პროგრესი (Module Progress): ' +
+                getModuleCompletedCount(mod.id) +
+                ' / ' +
+                mod.lessons.length
+              "
+              size="md"
+            />
+          </div>
+
+          <!-- Lessons List with ProgressService Action Triggers -->
+          <div class="lesson-mini-list">
+            <span class="mini-list-heading">
+              გაკვეთილები და ტესტები (Lessons & Quizzes):
+            </span>
+            @for (lesson of mod.lessons; track lesson.id) {
+              <div class="lesson-mini-item" [class.done]="isLessonDone(lesson.id)">
+                <div class="lesson-mini-info">
+                  <span class="status-icon">
+                    {{ isLessonDone(lesson.id) ? '✅' : '📖' }}
+                  </span>
+                  <div class="lesson-text-wrap">
+                    <span class="lesson-mini-title">
+                      {{ mod.order }}.{{ lesson.order }} {{ lesson.title }}
+                    </span>
+                    <div class="lesson-sub-meta">
+                      <span>⏱️ {{ lesson.durationMinutes }} წთ</span>
+                      @if (getQuizScore(lesson.quiz.id); as score) {
+                        <span class="quiz-score-badge">🏆 ტესტი (Quiz): {{ score }}%</span>
+                      }
+                    </div>
+                  </div>
+                </div>
+
+                <div class="lesson-mini-actions">
+                  @if (!isLessonDone(lesson.id)) {
+                    <button
+                      type="button"
+                      class="btn-xs btn-complete"
+                      (click)="onMarkLessonComplete(lesson.id, mod.id)"
+                      title="markLessonComplete()"
+                    >
+                      ✓ დასრულება
+                    </button>
+                  }
+                  <button
+                    type="button"
+                    class="btn-xs btn-quiz"
+                    (click)="onSimulateQuizPass(lesson)"
+                    title="saveQuizScore() - 100%"
+                  >
+                    🎯 ტესტი 100%
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="module-card-footer">
+            <a [routerLink]="['/modules', mod.id]" class="btn btn-primary full-width">
+              მოდულის გახსნა (Open Module) →
+            </a>
+          </div>
+        </article>
+      }
+    </div>
+  </section>
+</div>

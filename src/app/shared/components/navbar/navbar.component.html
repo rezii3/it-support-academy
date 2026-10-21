@@ -1,0 +1,42 @@
+<header class="navbar">
+  <div class="navbar-left">
+    <button
+      type="button"
+      class="menu-toggle-btn"
+      (click)="onMenuClick()"
+      aria-label="მენიუს გახსნა/დახურვა (Toggle Sidebar)"
+    >
+      ☰
+    </button>
+
+    <a routerLink="/dashboard" class="brand-link">
+      <div class="brand-logo">IT</div>
+      <div class="brand-text">
+        <span class="brand-title">IT Support Academy</span>
+        <span class="brand-subtitle">სასწავლო პლატფორმა (Learning Platform)</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="navbar-center">
+    <div class="global-progress-box">
+      <app-progress-bar
+        [value]="progressService.getTotalProgress()"
+        label="საერთო პროგრესი (Overall Progress)"
+        size="sm"
+      />
+    </div>
+  </div>
+
+  <div class="navbar-right">
+    <div class="stat-pill xp-pill" title="დაგროვილი გამოცდილება (Experience Points)">
+      <span class="stat-icon">⚡</span>
+      <span class="stat-value">{{ progressService.totalXp() }} XP</span>
+    </div>
+
+    <div class="stat-pill rank-pill">
+      <span class="stat-icon">🛡️</span>
+      <span class="stat-value">{{ progressService.currentRankTitle() }}</span>
+    </div>
+  </div>
+</header>
