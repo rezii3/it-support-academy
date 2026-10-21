@@ -57,3 +57,22 @@ Angular CLI does not come with an end-to-end testing framework by default. You c
 ## Additional Resources
 
 For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+# IT Support Academy (სასწავლო პლატფორმა)
+
+Interactive bilingual (Georgian / English) learning platform for aspiring **Junior IT Support Specialists**, **Help Desk Technicians**, and **CompTIA A+ / Google IT Support** candidates.
+
+## Key Features
+- **12 Structured Modules & 41 In-Depth Lessons**: Covering Computer Hardware, Operating Systems, Networking, Windows Administration, M365/Google Workspace, Identity & Security, Virtualization/Home Lab, Help Desk/ITSM, Remote Support, Troubleshooting Methodology, Customer Service/IT Languages, and Career/Certification Prep.
+- **Verified Learning Resources**: Official documentation, free training courses, and technical guides from Microsoft Learn, CompTIA, Professor Messer, Cisco Networking Academy, Coursera (Google IT Support), Oracle VirtualBox, Wireshark, and Atlassian.
+- **Hands-On Lab Scenarios & Practical Assignments**: Step-by-step ticket diagnostics, interactive lab checklists, and copyable CLI/PowerShell snippets.
+- **Full Quiz Engine (`quiz-view` & In-Lesson Assessment)**: Supports Step-by-Step and All-Questions modes, question navigator pills, answer validation, detailed explanations, XP rewards, and `localStorage` persistence.
+
+## Prerequisites
+- **Node.js**: v20.11+ or v22+
+- **npm**: v10+
+
+## Installation & Running Locally
+
+1. **Install dependencies**:
+   ```bash
+   npm install

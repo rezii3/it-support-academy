@@ -4,7 +4,7 @@
 
     <header class="module-head">
       <div class="module-icon">{{ mod.icon }}</div>
-      <div>
+      <div class="module-head-info">
         <span class="module-order">მოდული {{ mod.order }} · ⏱️ {{ mod.estimatedHours }} სთ</span>
         <h1>{{ mod.title }}</h1>
         <p class="subtitle">{{ mod.subtitle }}</p>
@@ -13,36 +13,68 @@
 
     <p class="description">{{ mod.description }}</p>
 
-    <app-progress-bar
-      [value]="moduleProgress()"
-      [label]="'მოდულის პროგრესი: ' + progress.getModuleCompletedLessonsCount(mod.id) + ' / ' + mod.lessons.length"
-      size="md"
-    />
+    <div class="module-progress-card">
+      <app-progress-bar
+        [value]="moduleProgress()"
+        [label]="
+          'მოდულის პროგრესი: ' +
+          progress.getModuleCompletedLessonsCount(mod.id) +
+          ' / ' +
+          mod.lessons.length +
+          ' გაკვეთილი დასრულებულია'
+        "
+        size="md"
+      />
+    </div>
 
-    <h2>გაკვეთილები (Lessons)</h2>
+    <h2>გაკვეთილები და ტესტები (Lessons & Assessments)</h2>
 
     <div class="lesson-list">
       @for (lesson of mod.lessons; track lesson.id) {
-        <a
-          class="lesson-row"
-          [class.done]="progress.isLessonCompleted(lesson.id)"
-          [routerLink]="['/modules', mod.id, 'lessons', lesson.id]"
-        >
+        <article class="lesson-row" [class.done]="progress.isLessonCompleted(lesson.id)">
           <span class="lesson-status">{{ progress.isLessonCompleted(lesson.id) ? '✅' : '📖' }}</span>
-          <span class="lesson-info">
-            <span class="lesson-title">{{ mod.order }}.{{ lesson.order }} {{ lesson.title }}</span>
-            <span class="lesson-summary">{{ lesson.summary }}</span>
-            <span class="lesson-meta">
-              ⏱️ {{ lesson.durationMinutes }} წთ
-              @if (!hasContent(lesson.sections.length)) {
-                <span class="soon">· შინაარსი მალე დაემატება</span>
+
+          <div class="lesson-info">
+            <a class="lesson-title" [routerLink]="['/modules', mod.id, 'lessons', lesson.id]">
+              {{ mod.order }}.{{ lesson.order }} {{ lesson.title }}
+            </a>
+            <p class="lesson-summary">{{ lesson.summary }}</p>
+            <div class="lesson-meta">
+              <span>⏱️ {{ lesson.durationMinutes }} წთ</span>
+              <span>📑 {{ lesson.sections.length }} სექცია</span>
+              <span>❓ {{ lesson.quiz.questions.length }} კითხვა</span>
+              @if (getQuizScore(lesson.quiz.id); as score) {
+                <span class="score-pill">🏆 ტესტი: {{ score }}%</span>
               }
-            </span>
-          </span>
-          <span class="lesson-open">გახსნა →</span>
-        </a>
+            </div>
+          </div>
+
+          <div class="lesson-actions">
+            <a class="btn primary" [routerLink]="['/modules', mod.id, 'lessons', lesson.id]">
+              გაკვეთილი →
+            </a>
+            <a class="btn ghost" [routerLink]="['/modules', mod.id, 'lessons', lesson.id, 'quiz']">
+              🎯 ტესტი
+            </a>
+          </div>
+        </article>
       }
     </div>
+
+    @if (resources().length > 0) {
+      <section class="resources-section">
+        <h2>სანდო წყაროები და ოფიციალური დოკუმენტაცია (Verified Learning Resources)</h2>
+        <div class="resources-grid">
+          @for (res of resources(); track res.url) {
+            <a class="resource-card" [href]="res.url" target="_blank" rel="noopener noreferrer">
+              <span class="resource-type">{{ res.type.toUpperCase() }} · {{ res.provider }}</span>
+              <strong class="resource-title">{{ res.title }} ↗</strong>
+              <span class="resource-url">{{ res.url }}</span>
+            </a>
+          }
+        </div>
+      </section>
+    }
   </div>
 } @else {
   <div class="page">

@@ -12,18 +12,19 @@ import { ProgressBarComponent } from '../../shared/components/progress-bar/progr
   styleUrl: './module-view.component.scss'
 })
 export class ModuleViewComponent {
-  private readonly curriculum = inject(CurriculumService);
+  readonly curriculum = inject(CurriculumService);
   readonly progress = inject(ProgressService);
 
   readonly moduleId = input.required<string>();
 
   readonly module = computed(() => this.curriculum.getModuleById(this.moduleId()));
+  readonly resources = computed(() => this.curriculum.getResourcesForModule(this.moduleId()));
 
   moduleProgress(): number {
     return this.progress.getModuleProgress(this.moduleId());
   }
 
-  hasContent(sectionsCount: number): boolean {
-    return sectionsCount > 0;
+  getQuizScore(quizId: string): number | null {
+    return this.progress.getQuizResult(quizId)?.scorePercent ?? null;
   }
 }

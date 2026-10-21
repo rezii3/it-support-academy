@@ -1,0 +1,258 @@
+@if (lesson(); as lesson) {
+  <main class="page quiz-page">
+    <div class="quiz-top-nav">
+      <a class="back-link" [routerLink]="['/modules', lesson.moduleId, 'lessons', lesson.id]">
+        ← გაკვეთილზე დაბრუნება ({{ lesson.title }})
+      </a>
+      <a class="back-link" [routerLink]="['/modules', lesson.moduleId]">
+        {{ module()?.icon }} მოდული {{ module()?.order }}
+      </a>
+    </div>
+
+    <header class="quiz-header">
+      <div class="quiz-header-meta">
+        <span class="eyebrow">IT SUPPORT ACADEMY · ცოდნის შემოწმება (ASSESSMENT)</span>
+        @if (previousBest(); as prev) {
+          <span class="best-badge" [class.passed]="prev.passed">
+            {{ prev.passed ? '🏆 საუკეთესო შედეგი:' : '📊 წინა შედეგი:' }} {{ prev.scorePercent }}%
+          </span>
+        }
+      </div>
+
+      <h1>{{ lesson.quiz.title || (lesson.title + ' — ტესტი') }}</h1>
+      <p class="summary">
+        უპასუხეთ ყველა კითხვას თქვენი ცოდნის შესამოწმებლად. ჩასაბარებელი ზღვარი:
+        <strong>{{ lesson.quiz.passingScorePercent }}%</strong> (წარმატებით ჩაბარებისას გაკვეთილი
+        ავტომატურად ჩაითვლება დასრულებულად და დაგერიცხებათ XP).
+      </p>
+
+      <div class="quiz-controls-bar">
+        <div class="progress-col">
+          <app-progress-bar
+            [value]="answeredPercent()"
+            [label]="'პასუხგაცემულია: ' + answeredCount() + ' / ' + questions().length + ' კითხვა'"
+            size="md"
+          />
+        </div>
+
+        <div class="mode-toggle" role="group" aria-label="ჩვენების რეჟიმი">
+          <button
+            type="button"
+            class="mode-btn"
+            [class.active]="viewMode() === 'all'"
+            (click)="setViewMode('all')"
+          >
+            ყველა კითხვა ({{ questions().length }})
+          </button>
+          <button
+            type="button"
+            class="mode-btn"
+            [class.active]="viewMode() === 'step'"
+            (click)="setViewMode('step')"
+          >
+            სათითაოდ (Step-by-Step)
+          </button>
+        </div>
+      </div>
+
+      <!-- Question Navigator Pills -->
+      @if (questions().length > 0) {
+        <div class="question-pills" role="navigation" aria-label="კითხვების ნავიგატორი">
+          @for (q of questions(); track q.id; let i = $index) {
+            <button
+              type="button"
+              class="q-pill"
+              [class.active]="viewMode() === 'step' && currentIndex() === i"
+              [class.answered]="!submitted() && isQuestionAnswered(q.id)"
+              [class.correct]="submitted() && isQuestionCorrect(q.id, q.correctOptionId)"
+              [class.wrong]="submitted() && !isQuestionCorrect(q.id, q.correctOptionId)"
+              (click)="setViewMode('step'); goToQuestion(i)"
+            >
+              {{ i + 1 }}
+            </button>
+          }
+        </div>
+      }
+    </header>
+
+    @if (questions().length === 0) {
+      <section class="empty-state">
+        <h2>ტესტი ჯერ არ არის დამატებული</h2>
+        <p>ამ გაკვეთილისთვის კითხვები ჯერ არ არის ხელმისაწვდომი.</p>
+      </section>
+    } @else {
+      @if (submitted()) {
+        <section class="result-panel" [class.pass]="passed()" [class.fail]="!passed()">
+          <div class="result-header">
+            <div>
+              <span class="result-kicker">
+                {{ passed() ? '✅ ტესტი წარმატებით ჩაბარდა' : '⚠️ ზღვარი ვერ გადაილახა' }}
+              </span>
+              <h2>
+                {{
+                  passed()
+                    ? 'შესანიშნავია! თქვენ წარმატებით დაადასტურეთ ცოდნა.'
+                    : 'გადახედეთ ქვემოთ მოცემულ განმარტებებს და სცადეთ ხელახლა.'
+                }}
+              </h2>
+              <p>
+                სწორი პასუხები: <strong>{{ correctCount() }} / {{ questions().length }}</strong>
+                (მინიმალური ზღვარი: {{ lesson.quiz.passingScorePercent }}%).
+              </p>
+            </div>
+            <div class="score-badge">
+              <span class="score">{{ scorePercent() }}<small>%</small></span>
+            </div>
+          </div>
+
+          <div class="result-actions">
+            <button class="btn primary" type="button" (click)="retryQuiz()">
+              🔄 თავიდან ცდა (Retry Quiz)
+            </button>
+            <a class="btn ghost" [routerLink]="['/modules', lesson.moduleId, 'lessons', lesson.id]">
+              📖 გაკვეთილზე დაბრუნება
+            </a>
+            @if (passed() && neighbours().next; as nextItem) {
+              <a
+                class="btn primary"
+                [routerLink]="['/modules', nextItem.module.id, 'lessons', nextItem.lesson.id]"
+              >
+                შემდეგი გაკვეთილი: {{ nextItem.lesson.title }} →
+              </a>
+            }
+          </div>
+        </section>
+      }
+
+      @if (viewMode() === 'step' && currentQuestion(); as q) {
+        <section class="question-card">
+          <div class="question-top">
+            <span class="question-number">{{ currentIndex() + 1 }}</span>
+            <span class="question-counter">
+              კითხვა {{ currentIndex() + 1 }} / {{ questions().length }}
+            </span>
+          </div>
+
+          <h2>{{ q.questionText }}</h2>
+
+          <div class="options">
+            @for (opt of q.options; track opt.id) {
+              <button
+                type="button"
+                [class]="optionClass(q.id, opt.id, q.correctOptionId)"
+                [disabled]="submitted()"
+                (click)="selectAnswer(q.id, opt.id)"
+              >
+                <span class="option-id">{{ opt.id.toUpperCase() }}</span>
+                <span class="option-text">{{ opt.text }}</span>
+                @if (submitted() && opt.id === q.correctOptionId) {
+                  <span class="answer-tag correct-tag">✓ სწორია</span>
+                } @else if (submitted() && answers()[q.id] === opt.id && opt.id !== q.correctOptionId) {
+                  <span class="answer-tag wrong-tag">✗ თქვენი პასუხი</span>
+                }
+              </button>
+            }
+          </div>
+
+          @if (submitted()) {
+            <div class="explanation">
+              <strong>💡 განმარტება (Explanation):</strong>
+              <p>{{ q.explanation }}</p>
+            </div>
+          }
+
+          <div class="step-nav-bar">
+            <button
+              type="button"
+              class="btn ghost"
+              [disabled]="currentIndex() === 0"
+              (click)="prevQuestion()"
+            >
+              ← წინა კითხვა
+            </button>
+
+            @if (currentIndex() < questions().length - 1) {
+              <button type="button" class="btn primary" (click)="nextQuestion()">
+                შემდეგი კითხვა →
+              </button>
+            } @else if (!submitted()) {
+              <button
+                type="button"
+                class="btn primary"
+                [disabled]="answeredCount() < questions().length"
+                (click)="submitQuiz()"
+              >
+                ✓ პასუხების შემოწმება ({{ answeredCount() }}/{{ questions().length }})
+              </button>
+            }
+          </div>
+        </section>
+      } @else {
+        @for (q of questions(); track q.id; let i = $index) {
+          <section class="question-card">
+            <div class="question-top">
+              <span class="question-number">{{ i + 1 }}</span>
+              <span class="question-counter">კითხვა {{ i + 1 }} / {{ questions().length }}</span>
+              @if (submitted()) {
+                <span
+                  class="question-status-badge"
+                  [class.ok]="isQuestionCorrect(q.id, q.correctOptionId)"
+                  [class.err]="!isQuestionCorrect(q.id, q.correctOptionId)"
+                >
+                  {{ isQuestionCorrect(q.id, q.correctOptionId) ? '✓ სწორია' : '✗ არასწორია' }}
+                </span>
+              }
+            </div>
+
+            <h2>{{ q.questionText }}</h2>
+
+            <div class="options">
+              @for (opt of q.options; track opt.id) {
+                <button
+                  type="button"
+                  [class]="optionClass(q.id, opt.id, q.correctOptionId)"
+                  [disabled]="submitted()"
+                  (click)="selectAnswer(q.id, opt.id)"
+                >
+                  <span class="option-id">{{ opt.id.toUpperCase() }}</span>
+                  <span class="option-text">{{ opt.text }}</span>
+                  @if (submitted() && opt.id === q.correctOptionId) {
+                    <span class="answer-tag correct-tag">✓ სწორი პასუხი</span>
+                  } @else if (submitted() && answers()[q.id] === opt.id && opt.id !== q.correctOptionId) {
+                    <span class="answer-tag wrong-tag">✗ თქვენი პასუხი</span>
+                  }
+                </button>
+              }
+            </div>
+
+            @if (submitted()) {
+              <div class="explanation">
+                <strong>💡 განმარტება (Explanation):</strong>
+                <p>{{ q.explanation }}</p>
+              </div>
+            }
+          </section>
+        }
+
+        @if (!submitted()) {
+          <button
+            class="btn primary submit-btn"
+            type="button"
+            [disabled]="answeredCount() < questions().length"
+            (click)="submitQuiz()"
+          >
+            პასუხების შემოწმება ({{ answeredCount() }} / {{ questions().length }}) →
+          </button>
+        }
+      }
+    }
+  </main>
+} @else {
+  <main class="page">
+    <section class="empty-state">
+      <h1>ტესტი ვერ მოიძებნა</h1>
+      <p>მითითებული მოდული ან გაკვეთილი ვერ მოიძებნა. გთხოვთ დაბრუნდეთ მთავარ დაფაზე.</p>
+      <a class="btn primary" routerLink="/dashboard">← მთავარ დაფაზე დაბრუნება</a>
+    </section>
+  </main>
+}

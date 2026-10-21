@@ -6,44 +6,45 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.4rem;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .progress-label {
-  color: #cbd5e1;
+  color: var(--text-secondary);
   font-weight: 500;
 }
 
 .progress-percent {
-  color: #38bdf8;
+  color: var(--text-primary);
   font-weight: 700;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
 }
 
 .progress-track {
   width: 100%;
-  background-color: #1e293b;
+  background-color: rgba(255, 255, 255, 0.07);
   border-radius: 999px;
   overflow: hidden;
-  border: 1px solid rgba(148, 163, 184, 0.15);
+  border: 1px solid var(--border-subtle);
 
   &.size-sm {
     height: 6px;
   }
 
   &.size-md {
-    height: 10px;
+    height: 9px;
   }
 
   &.size-lg {
-    height: 14px;
+    height: 12px;
   }
 }
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #0284c7 0%, #38bdf8 100%);
+  background: linear-gradient(90deg, #c8102e 0%, #ff4d63 100%);
   border-radius: 999px;
   transition: width 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 

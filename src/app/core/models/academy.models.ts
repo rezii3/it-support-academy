@@ -4,6 +4,13 @@ export interface KeyTerm {
   definitionKa: string;
 }
 
+export interface LearningResource {
+  title: string;
+  provider: string;
+  url: string;
+  type: 'doc' | 'course' | 'video' | 'tool';
+}
+
 export interface LessonSection {
   heading: string;
   content: string;
@@ -16,6 +23,7 @@ export interface PracticalScenario {
   title: string;
   ticketDescription: string;
   solutionSteps: string[];
+  assignmentTasks?: string[];
 }
 
 export interface QuestionOption {
@@ -51,6 +59,7 @@ export interface Lesson {
   sections: LessonSection[];
   keyTerms: KeyTerm[];
   practicalScenario?: PracticalScenario;
+  resources?: LearningResource[];
   quiz: Quiz;
 }
 
@@ -62,6 +71,7 @@ export interface Module {
   description: string;
   icon: string;
   estimatedHours: number;
+  resources?: LearningResource[];
   lessons: Lesson[];
 }
 

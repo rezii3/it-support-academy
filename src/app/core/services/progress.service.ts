@@ -19,14 +19,10 @@ const INITIAL_PROGRESS: Progress = {
 })
 export class ProgressService {
   private readonly curriculumService = inject(CurriculumService);
-
-  // Core reactive state initialized from localStorage
   private readonly progressSignal = signal<Progress>(this.loadFromStorage());
 
-  // Readonly signal exposed to components
   readonly progress = this.progressSignal.asReadonly();
 
-  // Computed signals for reactive UI bindings
   readonly totalProgressSignal = computed(() => {
     const totalLessons = this.curriculumService.totalLessonsCount();
     if (totalLessons === 0) {
@@ -51,35 +47,55 @@ export class ProgressService {
     return results.filter((r) => r.passed).length;
   });
 
+  readonly averageQuizScore = computed(() => {
+    const results = Object.values(this.progressSignal().quizResults);
+    if (results.length === 0) {
+      return 0;
+    }
+    const sum = results.reduce((acc, r) => acc + r.scorePercent, 0);
+    return Math.round(sum / results.length);
+  });
+
   readonly currentRankTitle = computed(() => {
     const pct = this.totalProgressSignal();
     if (pct === 0) return 'დამწყები სტაჟიორი (IT Intern)';
-    if (pct < 40) return 'დამწყები ტექნიკოსი (Trainee Technician)';
-    if (pct < 80) return 'უმცროსი სპეციალისტი (Junior Help Desk)';
-    if (pct < 100) return 'IT მხარდაჭერის სპეციალისტი (IT Support Specialist)';
-    return 'სერტიფიცირებული სპეციალისტი (Certified Junior IT Support)';
+    if (pct < 25) return 'დამწყები ტექნიკოსი (Trainee Technician)';
+    if (pct < 55) return 'უმცროსი სპეციალისტი (Junior Help Desk L1)';
+    if (pct < 85) return 'IT მხარდაჭერის სპეციალისტი (IT Support Specialist L2)';
+    if (pct < 100) return 'უფროსი ტექნიკური სპეციალისტი (Senior Support Engineer)';
+    return 'სერტიფიცირებული სპეციალისტი (Certified IT Support Pro)';
   });
 
   constructor() {
-    // Automatically synchronize state changes to localStorage whenever progressSignal updates
     effect(() => {
       const currentState = this.progressSignal();
       this.saveToStorage(currentState);
     });
   }
 
-  /**
-   * 1. markLessonComplete
-   * Marks a lesson as completed, awards XP if not already completed,
-   * recalculates completed modules, and updates localStorage.
-   */
+  recordLessonVisit(lessonId: string, moduleId: string): void {
+    this.progressSignal.update((current) => {
+      if (
+        current.lastVisitedLessonId === lessonId &&
+        current.lastVisitedModuleId === moduleId
+      ) {
+        return current;
+      }
+      return {
+        ...current,
+        lastVisitedModuleId: moduleId,
+        lastVisitedLessonId: lessonId,
+        updatedAt: new Date().toISOString()
+      };
+    });
+  }
+
   markLessonComplete(lessonId: string, moduleId?: string): void {
     const resolvedModuleId =
       moduleId ?? this.findModuleIdByLessonId(lessonId) ?? null;
 
     this.progressSignal.update((current) => {
       const alreadyCompleted = current.completedLessonIds.includes(lessonId);
-
       const updatedLessonIds = alreadyCompleted
         ? current.completedLessonIds
         : [...current.completedLessonIds, lessonId];
@@ -100,11 +116,6 @@ export class ProgressService {
     });
   }
 
-  /**
-   * 2. saveQuizScore
-   * Saves the quiz score and attempt metadata in localStorage.
-   * If the user passes (>= passingScorePercent), it also automatically marks the lesson complete.
-   */
   saveQuizScore(
     quizId: string,
     lessonId: string,
@@ -135,19 +146,30 @@ export class ProgressService {
       const wasPreviouslyPassed = previousAttempt?.passed ?? false;
       const wasLessonCompleted = current.completedLessonIds.includes(lessonId);
 
-      let updatedLessonIds = [...current.completedLessonIds];
+      const updatedLessonIds = [...current.completedLessonIds];
       let xpGain = 0;
 
-      // Award 100 XP the first time a quiz is passed
       if (passed && !wasPreviouslyPassed) {
         xpGain += 100;
       }
 
-      // Automatically mark lesson complete if quiz is passed
       if (passed && !wasLessonCompleted) {
         updatedLessonIds.push(lessonId);
         xpGain += 50;
       }
+
+      const bestResult: QuizAttemptResult =
+        previousAttempt && previousAttempt.scorePercent > attemptResult.scorePercent
+          ? {
+              ...attemptResult,
+              scorePercent: previousAttempt.scorePercent,
+              correctAnswersCount: previousAttempt.correctAnswersCount,
+              passed: previousAttempt.passed || attemptResult.passed
+            }
+          : {
+              ...attemptResult,
+              passed: wasPreviouslyPassed || attemptResult.passed
+            };
 
       const updatedModuleIds =
         this.recalculateCompletedModules(updatedLessonIds);
@@ -158,7 +180,7 @@ export class ProgressService {
         completedModuleIds: updatedModuleIds,
         quizResults: {
           ...current.quizResults,
-          [quizId]: attemptResult
+          [quizId]: bestResult
         },
         lastVisitedModuleId: moduleId,
         lastVisitedLessonId: lessonId,
@@ -170,10 +192,6 @@ export class ProgressService {
     return attemptResult;
   }
 
-  /**
-   * 3. getModuleProgress
-   * Returns the completion percentage (0 - 100) for a given module ID.
-   */
   getModuleProgress(moduleId: string): number {
     const mod = this.curriculumService.getModuleById(moduleId);
     if (!mod || mod.lessons.length === 0) {
@@ -187,17 +205,10 @@ export class ProgressService {
     return Math.round((completedInModule / mod.lessons.length) * 100);
   }
 
-  /**
-   * 4. getTotalProgress
-   * Returns the overall course completion percentage (0 - 100).
-   */
   getTotalProgress(): number {
     return this.totalProgressSignal();
   }
 
-  /**
-   * Additional helper methods for UI state checks
-   */
   getModuleCompletedLessonsCount(moduleId: string): number {
     const mod = this.curriculumService.getModuleById(moduleId);
     if (!mod) {
@@ -222,26 +233,38 @@ export class ProgressService {
       updatedAt: new Date().toISOString()
     });
   }
-  exportProgress(): string {
-  return JSON.stringify(this.progressSignal(), null, 2);
-}
 
-importProgress(json: string): boolean {
-  try {
-    const parsed = JSON.parse(json) as Partial<Progress>;
-    if (!Array.isArray(parsed.completedLessonIds)) {
+  exportProgress(): string {
+    return JSON.stringify(this.progressSignal(), null, 2);
+  }
+
+  importProgress(json: string): boolean {
+    try {
+      const parsed = JSON.parse(json) as Partial<Progress>;
+      if (!Array.isArray(parsed.completedLessonIds)) {
+        return false;
+      }
+      const validLessonIds = new Set(
+        this.curriculumService.allLessons().map((item) => item.lesson.id)
+      );
+      const sanitizedLessonIds = parsed.completedLessonIds.filter(
+        (id): id is string => typeof id === 'string' && validLessonIds.has(id)
+      );
+      const recalculatedModules =
+        this.recalculateCompletedModules(sanitizedLessonIds);
+
+      this.progressSignal.set({
+        ...INITIAL_PROGRESS,
+        ...parsed,
+        completedLessonIds: sanitizedLessonIds,
+        completedModuleIds: recalculatedModules,
+        updatedAt: new Date().toISOString()
+      });
+      return true;
+    } catch {
       return false;
     }
-    this.progressSignal.set({
-      ...INITIAL_PROGRESS,
-      ...parsed,
-      updatedAt: new Date().toISOString()
-    });
-    return true;
-  } catch {
-    return false;
   }
-}
 
   private findModuleIdByLessonId(lessonId: string): string | undefined {
     for (const mod of this.curriculumService.modules()) {

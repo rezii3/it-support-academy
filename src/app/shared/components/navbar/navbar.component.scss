@@ -1,11 +1,12 @@
 .navbar {
-  height: 68px;
-  background-color: #0f172a;
-  border-bottom: 1px solid #1e293b;
+  height: 72px;
+  background: rgba(12, 14, 22, 0.92);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 clamp(14px, 2.5vw, 28px);
   position: sticky;
   top: 0;
   z-index: 100;
@@ -15,25 +16,26 @@
 .navbar-left {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.85rem;
 }
 
 .menu-toggle-btn {
   display: none;
-  background: #1e293b;
-  border: 1px solid #334155;
-  color: #f8fafc;
-  font-size: 1.25rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
+  font-size: 1.2rem;
   width: 40px;
   height: 40px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   align-items: center;
   justify-content: center;
-  transition: background 0.2s;
+  transition: background 0.18s ease, border-color 0.18s ease;
 
   &:hover {
-    background: #334155;
+    background: var(--bg-surface-hover);
+    border-color: var(--border-strong);
   }
 }
 
@@ -41,22 +43,21 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  text-decoration: none;
-  color: inherit;
 }
 
 .brand-logo {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #0284c7, #2563eb);
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--accent-hover), #b90f29);
   color: #ffffff;
   font-weight: 800;
-  font-size: 1.1rem;
+  font-size: 1rem;
+  letter-spacing: -0.03em;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.35);
+  box-shadow: 0 6px 18px rgba(239, 35, 60, 0.28);
 }
 
 .brand-text {
@@ -66,50 +67,50 @@
 
 .brand-title {
   font-weight: 700;
-  font-size: 1.05rem;
-  color: #f8fafc;
-  letter-spacing: -0.01em;
+  font-size: 1rem;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
 .brand-subtitle {
-  font-size: 0.75rem;
-  color: #94a3b8;
+  font-size: 0.72rem;
+  color: var(--text-muted);
 }
 
 .navbar-center {
   flex: 1;
-  max-width: 340px;
+  max-width: 320px;
 }
 
 .navbar-right {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .stat-pill {
   display: flex;
   align-items: center;
   gap: 0.45rem;
-  padding: 0.4rem 0.85rem;
+  padding: 0.42rem 0.8rem;
   border-radius: 999px;
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 600;
-  background-color: #1e293b;
-  border: 1px solid #334155;
-  color: #e2e8f0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
 }
 
 .xp-pill {
-  border-color: rgba(250, 204, 21, 0.35);
-  background-color: rgba(250, 204, 21, 0.08);
-  color: #fde047;
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.1);
+  color: #fcd34d;
 }
 
 .rank-pill {
-  border-color: rgba(56, 189, 248, 0.3);
-  background-color: rgba(56, 189, 248, 0.08);
-  color: #bae6fd;
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: #fda4af;
 }
 
 @media (max-width: 992px) {
@@ -117,11 +118,14 @@
     display: inline-flex;
   }
 
-  .navbar-center {
+  .navbar-center,
+  .rank-pill {
     display: none;
   }
+}
 
-  .rank-pill {
+@media (max-width: 560px) {
+  .brand-subtitle {
     display: none;
   }
 }
