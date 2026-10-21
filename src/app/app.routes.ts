@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { DashboardComponent } from './features/dashboard/dashboard.component';
+import { ModuleViewComponent } from './features/module-view/module-view.component';
+import { LessonViewComponent } from './features/lesson-view/lesson-view.component';
 
 export const routes: Routes = [
   {
@@ -13,9 +15,14 @@ export const routes: Routes = [
     title: 'მთავარი დაფა (Dashboard) | IT Support Academy'
   },
   {
-    // Temporary redirect until ModuleViewComponent is built in the next steps
     path: 'modules/:moduleId',
-    component: DashboardComponent
+    component: ModuleViewComponent,
+    title: 'მოდული | IT Support Academy'
+  },
+  {
+    path: 'modules/:moduleId/lessons/:lessonId',
+    component: LessonViewComponent,
+    title: 'გაკვეთილი | IT Support Academy'
   },
   {
     path: '**',
